@@ -1,10 +1,13 @@
+require('dotenv').config();
 const WebSocket = require("ws");
 const querystring = require("querystring");
+const ChatGPT = require("./src/ChatGPT.cjs");
 const server = require("http").createServer();
 
 const port = process.env.PORT || 3000;
 
 var connectionList = [];
+var systemStatus = [];
 
 server.listen(port, () => {
     console.log("Server Started..")
@@ -15,8 +18,11 @@ const wss = new WebSocket.Server({
     path: "/ws"
 });
 
-wss.on("connection", function (ws, req) {
-    var chatId = querystring.parse(req.url.split("?")[1]).chatId;
+wss.on("connection", async function (ws, req) {
+    var chatId = await ChatGPT.createThreads();
+
+    sendMsg(ws, "init", "Connected", { chatId: chatId })
+
     if (chatId == undefined || chatId == null) {
         ws.close();
     }
@@ -27,17 +33,30 @@ wss.on("connection", function (ws, req) {
         connectionList[chatId] = [];
     }
 
+    setSystemStatus(chatId, "waiting");
+
+
     connectionList[chatId].push(ws);
 
-    var initMsg = {
-        "type": "init",
-        "message": "connected"
-    }
-    sendMsg(ws, initMsg)
-
+    ChatGPT.askOnThreads(chatId, "Introduce your self and ask the help.", 'user').then(function (response) {
+        sendMsg(ws, "message", response)
+        setSystemStatus(chatId, "active");
+    });
     ws.on("message", function (msg) {
+        if (getSystemStatus(chatId) != "active") {
+            sendMsg(ws, "status", 'system is already running another process..')
+            return;
+        }
         var message = msg.toString("utf8");
+        var payload = JSON.parse(message);
 
+        if (payload.type === "message") {
+            setSystemStatus(chatId, "waiting");
+            ChatGPT.askOnThreads(chatId, payload.message, 'user').then(function (response) {
+                sendMsg(ws, "message", response)
+                setSystemStatus(chatId, "active");
+            });
+        }
     })
 
     ws.on("close", function () {
@@ -54,6 +73,19 @@ function disconnectConnections(chatId, ws) {
     });
 }
 
-function sendMsg(ws, payload) {
+function sendMsg(ws, type = "message", message = "", data = {}) {
+    var payload = {
+        "type": type,
+        "message": message,
+        "data": data
+    }
     ws.send(JSON.stringify(payload));
+}
+
+function setSystemStatus(chatId, status) {
+    systemStatus[chatId] = status;
+}
+
+function getSystemStatus(chatId) {
+    return systemStatus[chatId];
 }
