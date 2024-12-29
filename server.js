@@ -46,10 +46,14 @@ wss.on("connection", async function (ws, req) {
 
     connectionList[chatId].push(ws);
 
-    ChatGPT.askOnThreads(chatId, "Introduce your self and ask the help.", 'user').then(function (response) {
-        sendMsg(ws, "message", response)
-        setSystemStatus(chatId, "active");
-    });
+    // ChatGPT.askOnThreads(chatId, "Introduce your self and ask the help.", 'user').then(function (response) {
+    //     sendMsg(ws, "message", response)
+    //     setSystemStatus(chatId, "active");
+    // });
+
+    sendMsg(ws, "message", "I am your personal AI assistant here to provide information about Chethana and his professional works. If you have any questions regarding Chethana's experience, skills, projects, or anything related to his professional background, feel free to ask for help!")
+    setSystemStatus(chatId, "active");
+
     ws.on("message", function (msg) {
         if (getSystemStatus(chatId) != "active") {
             sendMsg(ws, "status", 'system is already running another process..')

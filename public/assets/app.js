@@ -71,3 +71,32 @@ function addSenderMsg(message) {
       </div>
     </div>`);
 }
+
+function setActive() {
+    $("#send-btn").removeAttr('disabled');
+    $("#inactive-send-icon").addClass('hidden');
+    $("#active-send-icon").removeClass('hidden');
+    ACTIVE = true;
+}
+
+function setInActive() {
+    $("#send-btn").attr('disabled', true);
+    $("#inactive-send-icon").removeClass('hidden');
+    $("#active-send-icon").addClass('hidden');
+    ACTIVE = true;
+}
+
+function setConnectingStatus() {
+    $("#connecting-indicter").removeClass('hidden');
+    $("#send-input").attr('disabled', true);
+}
+
+function removeConnectingStatus() {
+    $("#connecting-indicter").addClass('hidden');
+    $("#send-input").removeAttr('disabled');
+}
+
+function scrollDown() {
+    const chatContainer = $("#sender-view");
+    chatContainer.scrollTop(chatContainer[0].scrollHeight);
+}
