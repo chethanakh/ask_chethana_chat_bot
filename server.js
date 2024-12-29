@@ -1,17 +1,25 @@
 require('dotenv').config();
 const WebSocket = require("ws");
 const querystring = require("querystring");
+const express = require('express');
 const ChatGPT = require("./src/ChatGPT.cjs");
-const server = require("http").createServer();
+
+const app = express();
+app.use(express.json());
+app.use(express.static('public'));
 
 const port = process.env.PORT || 3000;
 
 var connectionList = [];
 var systemStatus = [];
 
-server.listen(port, () => {
+const server = app.listen(port, () => {
     console.log("Server Started..")
 })
+
+app.get('/', (req, res) => {
+    res.render(path.join(__dirname, 'public', 'index.html',));
+});
 
 const wss = new WebSocket.Server({
     server,
